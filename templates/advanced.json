@@ -1,0 +1,50 @@
+{
+  "name": "高级配置模板",
+  "description": "包含自定义品牌基因的高级配置",
+  "parameters": {
+    "GenerateAPlus": "true",
+    "outputNum": 8,
+    "ListingUserSelectedSize": "--ar 1:1",
+    "UserSelectedSize": "--ar 1464:610",
+    "language": "英语",
+    "customer_keywords": [
+      "核心功能卖点",
+      "材质工艺卖点",
+      "使用场景卖点",
+      "性能优势卖点"
+    ],
+    "brandKey": {
+      "brandColor": "#2196F3",
+      "fontStyle": "几何无衬线体",
+      "iconStyle": "实心圆",
+      "customSetting": "科技感现代风格"
+    },
+    "salesRegion": "美国",
+    "platform": "Amazon", 
+    "目标受众": "25-40岁科技爱好者",
+    "我的侵权词": [
+      "医疗",
+      "治疗",
+      "药物"
+    ]
+  },
+  "brand_color_options": {
+    "科技产品": "#2196F3",
+    "美容护肤": "#E8B4CB", 
+    "户外运动": "#4CAF50",
+    "家居生活": "#FF9800",
+    "时尚配饰": "#9C27B0"
+  },
+  "font_style_options": [
+    "几何无衬线体",
+    "硬朗无衬线体", 
+    "经典优雅衬线体",
+    "圆润童趣字体",
+    "俏皮手写风格"
+  ],
+  "icon_style_options": [
+    "实心圆",
+    "描边圆", 
+    "实心方块"
+  ]
+}

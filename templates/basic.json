@@ -1,0 +1,21 @@
+{
+  "name": "基础配置模板",
+  "description": "适合新手用户的基础参数配置",
+  "parameters": {
+    "GenerateAPlus": "true",
+    "outputNum": 6,
+    "ListingUserSelectedSize": "--ar 1:1",
+    "UserSelectedSize": "--ar 1464:610",
+    "language": "英语",
+    "customer_keywords": [
+      "请替换为您的产品卖点1",
+      "请替换为您的产品卖点2", 
+      "请替换为您的产品卖点3"
+    ],
+    "salesRegion": "美国",
+    "platform": "Amazon",
+    "目标受众": "请描述您的目标用户群体",
+    "我的侵权词": []
+  },
+  "usage_example": "将参数复制后替换具体内容，如将卖点改为['防水功能','长续航','快速充电']"
+}

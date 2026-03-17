@@ -1,20 +1,16 @@
 #!/usr/bin/env python3
 """
-Amazon Visual Architect - OpenClaw集成脚本
-简化调用接口，支持直接生图功能
+Amazon Visual Architect v8.2 - OpenClaw集成脚本
+专注于生成高质量AI绘图prompt
 """
 
 import sys
 import json
-import asyncio
 import os
 from datetime import datetime
 
-# 添加scripts目录到路径
-sys.path.append(os.path.join(os.path.dirname(__file__), 'scripts'))
-
 try:
-    from scripts.visual_architect import AmazonVisualArchitect
+    from prompt_generator import AmazonVisualArchitectPrompts
     DEPENDENCIES_OK = True
 except ImportError as e:
     DEPENDENCIES_OK = False
@@ -45,19 +41,14 @@ def parse_architect_request(message):
         "language": "英语"
     }
     
-    # 简单的参数提取
+    # 简化的参数提取
     lines = message.split('\n')
     for line in lines:
         line = line.strip()
         if any(keyword in line for keyword in ['卖点:', '核心卖点:', 'customer_keywords:']):
             content = line.split(':')[-1].strip()
             params["customer_keywords"] = [k.strip() for k in content.replace('、', ',').split(',') if k.strip()]
-        elif 'api_key:' in line or 'API KEY:' in line:
-            params["api_key"] = line.split(':')[-1].strip()
-        elif 'image_platform:' in line or '生图平台:' in line:
-            params["image_platform"] = line.split(':')[-1].strip().lower()
-        elif 'generate_images:' in line or '生成图片:' in line:
-            params["generate_images"] = 'true' in line.lower()
+
         elif '销售区域:' in line or 'salesRegion:' in line:
             params["salesRegion"] = line.split(':')[-1].strip()
         elif '语言:' in line or 'language:' in line:
@@ -65,18 +56,18 @@ def parse_architect_request(message):
     
     return params
 
-async def run_amazon_visual_architect(user_message):
+def run_amazon_visual_architect(user_message):
     """运行亚马逊全案视觉架构师"""
     
     if not DEPENDENCIES_OK:
         return {
-            "error": f"依赖库加载失败: {IMPORT_ERROR}",
-            "solution": "请安装required packages: pip install aiohttp"
+            "error": f"模块加载失败: {IMPORT_ERROR}",
+            "solution": "请确保prompt_generator.py文件存在"
         }
     
     try:
-        architect = AmazonVisualArchitect()
-        results = await architect.generate_complete_solution(user_message)
+        architect = AmazonVisualArchitectPrompts()
+        results = architect.generate_complete_solution(user_message)
         
         # 格式化输出
         output = {
@@ -92,14 +83,9 @@ async def run_amazon_visual_architect(user_message):
             }
         }
         
-        # 如果生成了图片
-        if "image_generation" in results:
-            output["image_generation"] = {
-                "success_rate": results["image_generation"].get("success_rate", 0),
-                "total_cost": results["image_generation"].get("total_cost", 0),
-                "successful_images": results["image_generation"].get("successful_images", 0),
-                "download_package": results.get("download_package")
-            }
+        # 添加使用指南
+        if "usage_guide" in results:
+            output["usage_guide"] = results["usage_guide"]
         
         return output
         
@@ -141,39 +127,42 @@ def format_output_for_chat(result):
     for i, prompt in enumerate(result["prompts"][:3], 1):  # 显示前3个
         output.append(f"### {i}. {prompt['selling_point']} ({prompt['category'].split('(')[0].strip()})")
         output.append(f"**布局**: {prompt['layout_model']}")
-        output.append(f"**Prompt**: `{prompt['prompt'][:100]}...`")
+        output.append(f"**适配平台**: {', '.join(prompt.get('optimized_for', ['通用']))}")
+        output.append(f"**Prompt预览**: `{prompt['prompt'][:100]}...`")
         output.append("")
     
     if len(result["prompts"]) > 3:
         output.append(f"*... 还有 {len(result['prompts'])-3} 个prompt*")
         output.append("")
     
-    # 图片生成结果
-    if "image_generation" in result:
-        img_gen = result["image_generation"]
-        output.append("## 🖼️ 图片生成结果")
-        output.append(f"- **成功率**: {img_gen['success_rate']:.1f}%")
-        output.append(f"- **生成费用**: ${img_gen['total_cost']:.3f}")
-        output.append(f"- **成功数量**: {img_gen['successful_images']}")
+    # 使用指南
+    output.append("## 🚀 使用指南")
+    if "usage_guide" in result:
+        usage = result["usage_guide"]
+        output.append("### 快速上手")
+        output.append(f"1. {usage['step1']}")
+        output.append(f"2. {usage['step2']}") 
+        output.append(f"3. {usage['step3']}")
+        output.append("")
         
-        if img_gen.get("download_package"):
-            output.append(f"- **下载包**: `{img_gen['download_package']}`")
+        output.append("### 平台建议")
+        for platform, tip in usage.get("platforms", {}).items():
+            output.append(f"- **{platform}**: {tip}")
         output.append("")
     
-    # 使用说明
-    output.append("## 💡 使用说明")
-    if "image_generation" in result:
-        output.append("图片已生成并打包，可直接使用。")
-    else:
-        output.append("复制prompt到AI绘图平台(如Midjourney/Stable Diffusion)生成图片。")
+    # 支持平台
+    if "summary" in result and "supported_platforms" in result["summary"]:
+        platforms = result["summary"]["supported_platforms"]
+        output.append(f"## 🎨 支持平台")
+        output.append(f"生成的prompt已针对以下平台优化: {', '.join(platforms)}")
     
     output.append("\n---")
-    output.append("*🎨 Amazon Visual Architect - 专业电商视觉设计工具*")
+    output.append("*🎨 Amazon Visual Architect v8.2 - 专业Prompt生成工具*")
     
     return "\n".join(output)
 
 # OpenClaw技能主函数
-async def main():
+def main():
     """主函数 - OpenClaw调用入口"""
     
     if len(sys.argv) < 2:
@@ -192,7 +181,7 @@ async def main():
     print("🎨 启动Amazon Visual Architect...")
     
     # 运行视觉架构师
-    result = await run_amazon_visual_architect(user_message)
+    result = run_amazon_visual_architect(user_message)
     
     # 格式化输出
     formatted_output = format_output_for_chat(result)
@@ -206,4 +195,4 @@ async def main():
         print(f"\n💾 完整结果已保存到: {output_file}")
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()

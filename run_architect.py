@@ -34,9 +34,9 @@ def parse_architect_request(message):
     # 提取关键参数
     params = {
         "customer_keywords": [],
-        "generate_images": False,
-        "image_platform": "stability", 
-        "api_key": "",
+        "has_product_image": False,
+        "image_input": "",
+        "vision_api_key": "",
         "salesRegion": "美国",
         "language": "英语"
     }
@@ -53,6 +53,15 @@ def parse_architect_request(message):
             params["salesRegion"] = line.split(':')[-1].strip()
         elif '语言:' in line or 'language:' in line:
             params["language"] = line.split(':')[-1].strip()
+        elif any(keyword in line for keyword in ['商品图片:', '图片:', 'product_image:', 'image:']):
+            params["has_product_image"] = True
+            content = line.split(':')[-1].strip()
+            if content and content not in ['[上传图片]', '[上传图片或提供路径]']:
+                params["image_input"] = content
+        elif 'vision_api_key:' in line or 'api_key:' in line:
+            key = line.split(':')[-1].strip()
+            if key.startswith('sk-'):
+                params["vision_api_key"] = key
     
     return params
 
@@ -114,12 +123,22 @@ def format_output_for_chat(result):
     output.append(f"- **图标系统**: {brand_dna['PURE_GRAPHICS_CODE（纯图形代码）']}")
     output.append("")
     
+    # 商品分析结果（如果有）
+    if "product_analysis" in result and result["product_analysis"]:
+        analysis = result["product_analysis"]["product_analysis"]
+        output.append("## 🔍 商品智能分析")
+        output.append(f"- **产品名称**: {analysis['product_name']}")
+        output.append(f"- **目标受众**: {analysis['target_audience']}")
+        output.append(f"- **自动卖点**: {', '.join(result['product_analysis']['extracted_selling_points'])}")
+        output.append(f"- **分析模型**: {result['product_analysis'].get('model_used', 'unknown')}")
+        output.append("")
+    
     # 生成摘要
     summary = result["summary"]
     output.append("## 📊 生成摘要")
     output.append(f"- **总Prompt数**: {summary['total_prompts']}")
-    output.append(f"- **Listing主图**: {summary['listing_images']}张")
-    output.append(f"- **A+品牌图**: {summary['aplus_images']}张")
+    output.append(f"- **Listing主图**: {summary['listing_prompts']}张")
+    output.append(f"- **A+品牌图**: {summary['aplus_prompts']}张")
     output.append("")
     
     # Prompt列表

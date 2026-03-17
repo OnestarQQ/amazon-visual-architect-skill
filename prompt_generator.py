@@ -1,20 +1,30 @@
 #!/usr/bin/env python3
 """
-Amazon Visual Architect v8.2 - 专业Prompt生成器
-专注于生成高质量的AI绘图prompt，适配各大AI绘图平台
+Amazon Visual Architect v8.3 - 智能Prompt生成器  
+集成商品图片分析，自动生成卖点，专业prompt一键生成
 """
 
 import json
 import sys
+import os
+import base64
 from datetime import datetime
 from typing import Dict, List, Optional
 
+# 导入商品分析器
+try:
+    from product_analyzer import analyze_product_from_image
+    PRODUCT_ANALYZER_AVAILABLE = True
+except ImportError:
+    PRODUCT_ANALYZER_AVAILABLE = False
+
 class AmazonVisualArchitectPrompts:
-    """亚马逊全案视觉架构师 - 专业Prompt生成器"""
+    """亚马逊全案视觉架构师 - 智能Prompt生成器"""
     
     def __init__(self):
-        self.version = "8.2"
+        self.version = "8.3"
         self.session_id = datetime.now().strftime("%Y%m%d_%H%M%S")
+        self.product_analysis_result = None
         
     def parse_user_input(self, user_message: str) -> Dict:
         """解析用户输入，提取参数"""
@@ -52,8 +62,52 @@ class AmazonVisualArchitectPrompts:
                     pass
             elif 'GenerateAPlus:' in line:
                 params["GenerateAPlus"] = 'true' in line.lower()
+            elif any(keyword in line.lower() for keyword in ['商品图片:', 'product_image:', '图片分析:', 'analyze_image:']):
+                params["has_product_image"] = True
+                # 提取图片路径或base64数据
+                content = line.split(':')[-1].strip()
+                if content and content != '[上传图片或描述]':
+                    params["image_input"] = content
+            elif 'api_key:' in line.lower() or 'vision_api:' in line.lower():
+                params["vision_api_key"] = line.split(':')[-1].strip()
         
         return params
+        
+    def analyze_product_image(self, params: Dict) -> Dict:
+        """分析商品图片，提取产品信息和卖点"""
+        
+        if not PRODUCT_ANALYZER_AVAILABLE:
+            return {
+                "success": False,
+                "error": "商品分析器未安装",
+                "suggestion": "使用模拟模式或手动输入卖点"
+            }
+        
+        # 获取图片和API配置
+        image_input = params.get("image_input", "")
+        api_key = params.get("vision_api_key", "")
+        
+        # 确定使用的模型
+        if api_key.startswith("sk-"):
+            model = "gpt-4-vision-preview"
+        elif api_key.startswith("sk-ant-"):
+            model = "claude-3-sonnet"
+        else:
+            model = "mock"  # 使用模拟模式
+        
+        # 分析商品
+        if os.path.exists(image_input):
+            # 本地文件路径
+            result = analyze_product_from_image(image_path=image_input, api_key=api_key, model=model)
+        elif image_input.startswith("data:image"):
+            # base64图片数据
+            base64_data = image_input.split(',')[1] if ',' in image_input else image_input
+            result = analyze_product_from_image(image_base64=base64_data, api_key=api_key, model=model)
+        else:
+            # 模拟模式
+            result = analyze_product_from_image(model="mock")
+        
+        return result
     
     def generate_brand_dna(self, params: Dict) -> Dict:
         """生成品牌基因报告"""
@@ -302,28 +356,63 @@ TECHNICAL: Ultra-high resolution, professional color grading, cinematic lighting
         }
     
     def generate_complete_solution(self, user_message: str) -> Dict:
-        """生成完整的prompt解决方案"""
+        """生成完整的prompt解决方案（包含可选的商品图片分析）"""
         
-        print(f"🎨 Amazon Visual Architect v{self.version} - 专业Prompt生成器")
+        print(f"🎨 Amazon Visual Architect v{self.version} - 智能Prompt生成器")
         print(f"📋 会话ID: {self.session_id}")
         
         # 1. 解析用户输入
         params = self.parse_user_input(user_message)
-        print(f"✅ 参数解析完成: {len(params['customer_keywords'])}个卖点")
         
-        # 2. 生成品牌基因
+        # 2. 可选：分析商品图片
+        product_analysis = None
+        if params.get("has_product_image") or params.get("image_input"):
+            print("🔍 检测到商品图片，开始智能分析...")
+            analysis_result = self.analyze_product_image(params)
+            
+            if analysis_result.get("success"):
+                product_analysis = analysis_result
+                self.product_analysis_result = product_analysis
+                
+                # 使用分析结果更新参数
+                recommended_params = analysis_result["recommended_params"]
+                
+                # 如果用户没有手动输入卖点，使用自动提取的卖点
+                if not params["customer_keywords"]:
+                    params["customer_keywords"] = recommended_params["customer_keywords"]
+                    print(f"🤖 自动提取卖点: {', '.join(params['customer_keywords'])}")
+                
+                # 自动推荐参数（如果用户未指定）
+                if not params.get("目标受众"):
+                    params["目标受众"] = recommended_params["目标受众"]
+                if params["salesRegion"] == "美国":  # 默认值
+                    params["salesRegion"] = recommended_params["salesRegion"]
+                if params["language"] == "英语":  # 默认值
+                    params["language"] = recommended_params["language"]
+                
+                print(f"✅ 商品分析完成 ({analysis_result.get('model_used', 'unknown')})")
+                print(f"📝 产品: {analysis_result['product_analysis']['product_name']}")
+                print(f"🎯 受众: {params['目标受众']}")
+            else:
+                print(f"⚠️ 商品分析失败: {analysis_result.get('error', '未知错误')}")
+                print("🔄 将使用用户输入的卖点继续...")
+        
+        print(f"✅ 参数准备完成: {len(params['customer_keywords'])}个卖点")
+        
+        # 3. 生成品牌基因
         brand_dna = self.generate_brand_dna(params)
         print(f"🎨 品牌基因提取: {brand_dna['brandColor (品牌主色)']}")
         
-        # 3. 生成prompt列表
+        # 4. 生成prompt列表
         prompts = self.generate_prompts(params, brand_dna)
         print(f"📝 生成 {len(prompts)} 个专业prompt")
         
-        # 4. 准备结果
+        # 5. 准备结果
         results = {
             "session_id": self.session_id,
             "version": self.version,
             "timestamp": datetime.now().isoformat(),
+            "product_analysis": product_analysis,  # 新增：商品分析结果
             "brand_dna": brand_dna,
             "prompts": prompts,
             "parameters": params,
@@ -354,6 +443,8 @@ TECHNICAL: Ultra-high resolution, professional color grading, cinematic lighting
             json.dump(results, f, ensure_ascii=False, indent=2)
         
         print(f"💾 完整结果已保存: {output_file}")
+        if product_analysis:
+            print("🔍 包含商品智能分析结果")
         print("🚀 prompt已生成完成，可复制到任何AI绘图平台使用！")
         
         return results
@@ -368,7 +459,8 @@ def generate_amazon_prompts(user_message: str) -> Dict:
 def example_usage():
     """使用示例"""
     
-    user_input = """
+    # 示例1：传统模式（手动输入卖点）
+    user_input_manual = """
     请使用亚马逊全案视觉架构师技能分析以下产品：
 
     **产品信息**:
@@ -380,7 +472,24 @@ def example_usage():
     - 语言: 英语
     """
     
-    results = generate_amazon_prompts(user_input)
+    # 示例2：智能模式（图片分析）
+    user_input_smart = """
+    请使用亚马逊全案视觉架构师技能智能分析商品：
+
+    **智能分析**:
+    - 商品图片: product.jpg
+    - vision_api_key: sk-xxxxxxxx (可选，不提供则使用模拟分析)
+    - 输出数量: 8
+    - 语言: 英语
+    """
+    
+    print("📝 示例1: 传统手动模式")
+    print("=" * 40)
+    results1 = generate_amazon_prompts(user_input_manual)
+    
+    print("\n🤖 示例2: 智能分析模式")  
+    print("=" * 40)
+    results2 = generate_amazon_prompts(user_input_smart)
     
     print("\n" + "="*50)
     print("🎉 Prompt生成完成!")

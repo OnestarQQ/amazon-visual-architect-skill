@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Amazon Visual Architect v8.2 - OpenClaw集成脚本
-专注于生成高质量AI绘图prompt
+Amazon Image Skill v1.0 - OpenClaw集成脚本
+专注于生成高质量商品套图prompt
 """
 
 import sys
@@ -10,7 +10,7 @@ import os
 from datetime import datetime
 
 try:
-    from prompt_generator import AmazonVisualArchitectPrompts
+    from prompt_generator import AmazonImageSkillPrompts
     DEPENDENCIES_OK = True
 except ImportError as e:
     DEPENDENCIES_OK = False
@@ -75,7 +75,7 @@ def run_amazon_visual_architect(user_message):
         }
     
     try:
-        architect = AmazonVisualArchitectPrompts()
+        architect = AmazonImageSkillPrompts()
         results = architect.generate_complete_solution(user_message)
         
         # 格式化输出
@@ -176,7 +176,7 @@ def format_output_for_chat(result):
         output.append(f"生成的prompt已针对以下平台优化: {', '.join(platforms)}")
     
     output.append("\n---")
-    output.append("*🎨 Amazon Visual Architect v8.2 - 专业Prompt生成工具*")
+    output.append("*🎯 Amazon Image Skill v1.0 - 商品套图生成工具*")
     
     return "\n".join(output)
 
@@ -197,7 +197,7 @@ def main():
         print("ℹ️ 这不是Amazon Visual Architect技能请求")
         return
     
-    print("🎨 启动Amazon Visual Architect...")
+    print("🎯 启动Amazon Image Skill...")
     
     # 运行视觉架构师
     result = run_amazon_visual_architect(user_message)

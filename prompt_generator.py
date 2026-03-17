@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Amazon Visual Architect v8.3 - 智能Prompt生成器  
-集成商品图片分析，自动生成卖点，专业prompt一键生成
+Amazon Image Skill v1.0 - 商品套图Prompt生成器  
+集成商品图片分析，自动生成卖点，专业套图prompt一键生成
 """
 
 import json
@@ -18,11 +18,11 @@ try:
 except ImportError:
     PRODUCT_ANALYZER_AVAILABLE = False
 
-class AmazonVisualArchitectPrompts:
-    """亚马逊全案视觉架构师 - 智能Prompt生成器"""
+class AmazonImageSkillPrompts:
+    """亚马逊商品套图生成 - 智能Prompt生成器"""
     
     def __init__(self):
-        self.version = "8.3"
+        self.version = "1.0"
         self.session_id = datetime.now().strftime("%Y%m%d_%H%M%S")
         self.product_analysis_result = None
         
@@ -358,7 +358,7 @@ TECHNICAL: Ultra-high resolution, professional color grading, cinematic lighting
     def generate_complete_solution(self, user_message: str) -> Dict:
         """生成完整的prompt解决方案（包含可选的商品图片分析）"""
         
-        print(f"🎨 Amazon Visual Architect v{self.version} - 智能Prompt生成器")
+        print(f"🎯 Amazon Image Skill v{self.version} - 商品套图Prompt生成器")
         print(f"📋 会话ID: {self.session_id}")
         
         # 1. 解析用户输入
@@ -445,14 +445,14 @@ TECHNICAL: Ultra-high resolution, professional color grading, cinematic lighting
         print(f"💾 完整结果已保存: {output_file}")
         if product_analysis:
             print("🔍 包含商品智能分析结果")
-        print("🚀 prompt已生成完成，可复制到任何AI绘图平台使用！")
+        print("🚀 商品套图prompt已生成完成，可复制到任何AI绘图平台使用！")
         
         return results
 
 # 主要调用函数
-def generate_amazon_prompts(user_message: str) -> Dict:
+def generate_amazon_image_prompts(user_message: str) -> Dict:
     """主要调用函数"""
-    generator = AmazonVisualArchitectPrompts()
+    generator = AmazonImageSkillPrompts()
     return generator.generate_complete_solution(user_message)
 
 # 使用示例
@@ -485,11 +485,11 @@ def example_usage():
     
     print("📝 示例1: 传统手动模式")
     print("=" * 40)
-    results1 = generate_amazon_prompts(user_input_manual)
+    results1 = generate_amazon_image_prompts(user_input_manual)
     
     print("\n🤖 示例2: 智能分析模式")  
     print("=" * 40)
-    results2 = generate_amazon_prompts(user_input_smart)
+    results2 = generate_amazon_image_prompts(user_input_smart)
     
     print("\n" + "="*50)
     print("🎉 Prompt生成完成!")
@@ -504,8 +504,8 @@ def example_usage():
 if __name__ == "__main__":
     if len(sys.argv) > 1:
         user_message = " ".join(sys.argv[1:])
-        generate_amazon_prompts(user_message)
+        generate_amazon_image_prompts(user_message)
     else:
-        print("Amazon Visual Architect v8.2 - 专业Prompt生成器")
+        print("Amazon Image Skill v1.0 - 商品套图Prompt生成器")
         print("用法: python prompt_generator.py \"用户消息\"")
-        print("或直接调用: from prompt_generator import generate_amazon_prompts")
+        print("或直接调用: from prompt_generator import generate_amazon_image_prompts")

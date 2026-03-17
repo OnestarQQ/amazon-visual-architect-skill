@@ -1,7 +1,7 @@
-# Amazon Visual Architect Skill
+# Amazon Image Skill
 
-> 🎨 亚马逊全案视觉架构师 AI 技能包 v8.2  
-> 专业电商视觉设计 Prompt 生成工具
+> 🎯 亚马逊商品套图生成 AI 技能包 v1.0  
+> 专业商品套图 Prompt 生成工具
 
 ## 📖 简介
 
